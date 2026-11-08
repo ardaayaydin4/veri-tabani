@@ -348,7 +348,7 @@
             { question: "<code>SELECT Bolum FROM Personel WHERE Sehir IN ('İstanbul', 'Kocaeli');</code> listesinde HANGİ BÖLÜM GÖRÜNMEZ?", table: personelTable, options: ["Bilgi İşlem", "İdari İşler", "Muhasebe", "Hepsi görünür"], answer: 2 },
             { question: "<code>SELECT REPLACE(Adi_soyadi, 'Salih ESKİOĞLU', 'Ahmet Yılmaz') FROM Personel WHERE id=1;</code> ekranında ne yazar?", table: personelTable, options: ["Salih ESKİOĞLU", "Ahmet Yılmaz", "Ahmet ESKİOĞLU", "Boş döner"], answer: 1 },
             { question: "<code>SELECT Adi_soyadi AS isim, Sehir AS memleket FROM Personel;</code> sonucu SÜTUN BAŞLIKLARI ne olur?", table: personelTable, options: ["Adi_soyadi ve Sehir", "isim ve Sehir", "isim ve memleket", "Adi_soyadi ve memleket"], answer: 2 },
-            { question: "<code>SELECT Adi_soyadi FROM Personel ORDER BY Adi_soyadi DESC;</code> listesinin İKİNCİ SIRASINDA hangi isim yer alır? (İpucu: Z'den A'ya)", table: personelTable, options: ["Serkan ÖZGÜREL", "Salih ESKİOĞLU", "İlhan ÖZLÜ", "Ayhan ÇETİNKAYA"], answer: 1 },
+            { question: "<code>SELECT Adi_soyadi FROM Personel ORDER BY Adi_soyadi DESC;</code> listesinin İKİNCİ SIRASINDA hangi isim yer alır?", table: personelTable, options: ["Serkan ÖZGÜREL", "Salih ESKİOĞLU", "İlhan ÖZLÜ", "Ayhan ÇETİNKAYA"], answer: 1 },
             { question: "<code>UPDATE ogrenciler SET sehir = 'Kırıkkale' WHERE ad = 'Ayşe';</code> komutunun ardından, Ayşe'nin (id=2) şehrini sorgularsanız ne döner?", table: ogrencilerTable, options: ["Mardin", "Kırıkkale", "İstanbul", "Tokat"], answer: 1 }
         ];
 
