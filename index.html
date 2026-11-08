@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL ve Veritabanı - Arda Ayaydın</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --hover-color: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            width: 100%;
+            max-width: 850px;
+            padding: 25px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            font-size: 1.4rem;
+        }
+
+        /* Navigasyon Izgarası (Soru Tablosu) */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .nav-btn {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .nav-btn.current {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-btn.answered {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: var(--primary-color);
+        }
+        
+        .nav-btn.answered.current {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        /* Dinamik Tablo Alanı */
+        .table-container {
+            margin: 15px 0;
+            overflow-x: auto;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 12px;
+            display: none; /* JS ile açılıp kapanacak */
+        }
+
+        .table-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #b91c1c;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background-color: var(--bg-color);
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-main);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #166534 !important;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--danger) !important;
+            color: #991b1b !important;
+        }
+
+        /* Alt Kontroller */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .control-btn {
+            background-color: var(--text-main);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .control-btn:hover:not(:disabled) {
+            background-color: #334155;
+        }
+
+        .control-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .finish-btn {
+            background-color: var(--success);
+        }
+        .finish-btn:hover {
+            background-color: #16a34a;
+        }
+
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .nav-grid { grid-template-columns: repeat(6, 1fr); padding: 10px; }
+            .quiz-container { padding: 15px; }
+            .control-btn { padding: 8px 12px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div id="quiz-screen">
+            <div class="header">
+                <h1>SQL ve Veritabanı - Arda Ayaydın</h1>
+            </div>
+
+            <!-- Soru Numaraları Tablosu -->
+            <div class="nav-grid" id="nav-grid"></div>
+            
+            <div class="question-text" id="question-text"></div>
+            
+            <!-- Her Soruya Özel Dinamik Olarak Yüklenecek Tablo Alanı -->
+            <div class="table-container" id="table-container"></div>
+
+            <div class="options-container" id="options-container"></div>
+
+            <div class="controls">
+                <button class="control-btn" id="prev-btn" onclick="prevQuestion()">⬅ Önceki</button>
+                <button class="control-btn finish-btn" id="finish-btn" onclick="showResults()" style="display:none;">Testi Bitir</button>
+                <button class="control-btn" id="next-btn" onclick="nextQuestion()">Sonraki ➡</button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="result-container">
+            <h2>Testi Tamamladın!</h2>
+            <div class="result-score" id="result-score">0 / 30</div>
+            <p id="result-message"></p>
+            <button class="control-btn" onclick="restartQuiz()" style="margin-top: 15px;">Yeniden Başla</button>
+        </div>
+    </div>
+
+    <script>
+        // Veritabanı Tablolarının HTML Şablonları (11-30. sorular için)
+        const urunlerTable = `
+            <div class="table-title">Ürünler Tablosu</div>
+            <table>
+                <tr><th>id</th><th>Urun adi</th><th>Fiyat</th></tr>
+                <tr><td>1</td><td>Buzdolabı</td><td>1500</td></tr>
+                <tr><td>2</td><td>LCD TV</td><td>1850</td></tr>
+                <tr><td>3</td><td>Çamaşır Makinesi</td><td>950</td></tr>
+                <tr><td>4</td><td>Çamaşır Makinesi</td><td>850</td></tr>
+            </table>
+        `;
+
+        const ogrencilerTable = `
+            <div class="table-title">Öğrenciler Tablosu</div>
+            <table>
+                <tr><th>id</th><th>ad</th><th>soyad</th><th>sehir</th></tr>
+                <tr><td>1</td><td>Ahmet</td><td>Keskin</td><td>Mardin</td></tr>
+                <tr><td>2</td><td>Ayşe</td><td>Sönmez</td><td>Mardin</td></tr>
+                <tr><td>3</td><td>Mehmet</td><td>Can</td><td>Adana</td></tr>
+                <tr><td>4</td><td>Sevim</td><td>Kahraman</td><td>Tokat</td></tr>
+            </table>
+        `;
+
+        const personelTable = `
+            <div class="table-title">Personel Tablosu</div>
+            <table>
+                <tr><th>id</th><th>Adi_soyadi</th><th>Sehir</th><th>Bolum</th></tr>
+                <tr><td>1</td><td>Salih ESKİOĞLU</td><td>İstanbul</td><td>Bilgi İşlem</td></tr>
+                <tr><td>2</td><td>Ayhan ÇETİNKAYA</td><td>Kocaeli</td><td>İdari İşler</td></tr>
+                <tr><td>3</td><td>Serkan ÖZGÜREL</td><td>Erzincan</td><td>Muhasebe</td></tr>
+                <tr><td>4</td><td>İlhan ÖZLÜ</td><td>İstanbul</td><td>Bilgi İşlem</td></tr>
+            </table>
+        `;
+
+        // 10 Teorik + 20 Uygulamalı Toplam 30 Soru
+        const quizData = [
+            // TEORİK SORULAR (1-10) - Bunlarda tablo görünmeyecek
+            { question: "<code>SELECT * FROM</code> komutunun veritabanındaki temel işlevi aşağıdakilerden hangisidir?", options: ["Sadece belirli bir şarta uyan kayıtları siler.", "Bir tablodaki tüm alanları ve kayıtları getirmeyi sağlar.", "Veritabanında yeni bir tablo oluşturur.", "Tablodaki verileri alfabetik olarak sıralar."], answer: 1 },
+            { question: "<code>REPLACE</code> komutu SQL sorgularında ne amaçla kullanılır?", options: ["Veritabanındaki bir tabloyu tamamen siler.", "Çıktıda bir değeri geçici olarak başka bir değerle değiştirir.", "İki farklı tabloyu birbiriyle birleştirir.", "Kayıtları kalıcı olarak günceller ve üzerine yazar."], answer: 1 },
+            { question: "<code>LIKE</code> operatörü ve <code>%</code> (yüzde) işareti bir sorguda ne işe yarar?", options: ["Matematiksel mod alma işlemini yapar.", "Tablodaki tekrarlayan verileri siler.", "Metinsel değerlerde harf benzerliklerine göre esnek arama yapar.", "Sayısal değerlerin yüzdelik oranını hesaplar."], answer: 2 },
+            { question: "<code>ORDER BY</code> ifadesinin sorgulardaki görevi nedir?", options: ["Verileri seçilen sütuna göre artan veya azalan şekilde sıralar.", "Verileri belirli bir şarta göre gruplandırır.", "Yeni bir veri girişi için sipariş oluşturur.", "Tablodaki verilerin yedeğini alır."], answer: 0 },
+            { question: "<code>DISTINCT</code> ifadesi sorgularda kullanıldığında sonuca nasıl bir etki eder?", options: ["Çıktıda tekrar eden satırları temizler ve teke düşürerek gösterir.", "Veritabanındaki tüm tabloları birbirine bağlar.", "Kayıtları tersine çevirerek listeler.", "Sadece sayısal değer içeren sütunları getirir."], answer: 0 },
+            { question: "<code>COUNT</code> hesaplama fonksiyonu ne işe yarar?", options: ["Belirtilen sütundaki verilerin ortalamasını alır.", "Belirtilen sütundaki veri içeren satır sayısını döndürür.", "Sütundaki değerleri toplar.", "Kayıtları ters sıraya dizer."], answer: 1 },
+            { question: "SQL sorgularında <code>GROUP BY</code> ifadesi neden kullanılır?", options: ["Kullanıcıları yetki gruplarına ayırmak için.", "Tabloları bir veritabanı altında toplamak için.", "Belirli bir kritere göre verileri gruplar ve özet fonksiyonlarıyla çalışır.", "Aynı isimdeki sütunları otomatik olarak silmek için."], answer: 2 },
+            { question: "Kayıtları kalıcı olarak değiştirmek için kullanılan komut hangisidir?", options: ["UPDATE", "REPLACE", "SELECT", "INSERT"], answer: 0 },
+            { question: "Tablo oluşturulurken kullanılan <code>AUTO_INCREMENT</code> ne anlama gelir?", options: ["Tablodaki verileri otomatik siler.", "Yeni kayıt eklendikçe sayısal değeri otomatik olarak artırır.", "Tabloyu otomatik olarak yedekler.", "Hücre verisinin boş geçilmesini engeller."], answer: 1 },
+            { question: "Tablolar tasarlanırken kullanılan <code>PRIMARY KEY</code> (Birincil Anahtar) ifadesinin temel tanımı nedir?", options: ["Tablodaki en yüksek sayısal değeri ifade eder.", "Tablodaki her kaydı benzersiz olarak tanımlayan kimlik alanıdır.", "Sadece metin girilebilen özel bir sütun türüdür.", "Veritabanına giriş yapmak için kullanılan şifredir."], answer: 1 },
+
+            // URUNLER TABLOSU SORULARI (11-15) - Tablolar dinamik yüklenecek
+            { question: "Aşağıdaki tablo için <code>SELECT AVG(Fiyat) FROM Urunler;</code> sorgusunun çıktısı ne olur?", table: urunlerTable, options: ["1850", "900", "1287.5", "5150"], answer: 2 },
+            { question: "Bu tablo üzerinde <code>SELECT MAX(Fiyat) FROM Urunler;</code> çalıştırılırsa çıktı ne olur?", table: urunlerTable, options: ["950", "1500", "1850", "5150"], answer: 2 },
+            { question: "Bu tablo üzerinde <code>SELECT MIN(Fiyat) FROM Urunler;</code> çalıştırılırsa sonuç kaçtır?", table: urunlerTable, options: ["850", "950", "1500", "1850"], answer: 0 },
+            { question: "Bu tablo için <code>SELECT SUM(Fiyat) FROM Urunler;</code> çalıştırılırsa ne sonuç alınır?", table: urunlerTable, options: ["1800", "1850", "5150", "1287.5"], answer: 2 },
+            { question: "Bu tablo için <code>SELECT Urun_adi, SUM(Fiyat) FROM Urunler GROUP BY Urun_adi;</code> yazarsanız, 'Çamaşır Makinesi'nin karşısında hangi fiyat yazar?", table: urunlerTable, options: ["850", "950", "1800", "5150"], answer: 2 },
+
+            // OGRENCILER TABLOSU SORULARI (16-23)
+            { question: "<code>SELECT ad FROM ogrenciler WHERE id = 3;</code> çıktısında hangi isim bulunur?", table: ogrencilerTable, options: ["Ahmet", "Ayşe", "Mehmet", "Sevim"], answer: 2 },
+            { question: "<code>SELECT sehir FROM ogrenciler WHERE ad='Ayşe' AND soyad='Sönmez';</code> çıktısı nedir?", table: ogrencilerTable, options: ["Adana", "Tokat", "Mardin", "İstanbul"], answer: 2 },
+            { question: "<code>SELECT ad, soyad FROM ogrenciler WHERE ad='Selma' OR id=3;</code> çalıştırılırsa çıktı hangisidir?", table: ogrencilerTable, options: ["Ahmet Keskin", "Mehmet Can", "Ayşe Sönmez", "Sevim Kahraman"], answer: 1 },
+            { question: "<code>SELECT ad FROM ogrenciler WHERE sehir IN ('Mardin', 'Adana');</code> çıktısında HANGİSİ YER ALMAZ?", table: ogrencilerTable, options: ["Ahmet", "Mehmet", "Sevim", "Ayşe"], answer: 2 },
+            { question: "<code>SELECT ad FROM ogrenciler WHERE id BETWEEN 2 AND 4;</code> çıktısı nasıl görünür?", table: ogrencilerTable, options: ["Ahmet, Ayşe, Mehmet", "Mehmet, Sevim", "Ayşe, Mehmet, Sevim", "Ahmet, Sevim"], answer: 2 },
+            { question: "<code>SELECT ad FROM ogrenciler WHERE ad LIKE 'A%';</code> sorgusunun sonucunda kaç kayıt listelenir?", table: ogrencilerTable, options: ["1", "2", "3", "0"], answer: 1 },
+            { question: "<code>SELECT ad FROM ogrenciler ORDER BY ad DESC;</code> uygularsanız, listenin EN ÜSTÜNDE hangi isim yer alır?", table: ogrencilerTable, options: ["Ahmet", "Ayşe", "Mehmet", "Sevim"], answer: 3 },
+            { question: "<code>SELECT ad FROM ogrenciler WHERE sehir LIKE '%ar%';</code> çıktısında hangi isimler listelenir?", table: ogrencilerTable, options: ["Ahmet ve Ayşe", "Mehmet", "Sevim", "Ayşe ve Mehmet"], answer: 0 },
+
+            // PERSONEL TABLOSU VE KARMA (24-30)
+            { question: "<code>SELECT DISTINCT Sehir FROM Personel;</code> sonucunda kaç satır listelenir?", table: personelTable, options: ["2", "3", "4", "1"], answer: 1 },
+            { question: "<code>SELECT Adi_soyadi FROM Personel WHERE Sehir='İstanbul';</code> yazıldığında çıktıda kimler yer alır?", table: personelTable, options: ["Serkan, Ayhan", "Salih, İlhan", "Ayhan, İlhan", "Salih, Serkan"], answer: 1 },
+            { question: "<code>SELECT Bolum FROM Personel WHERE Sehir IN ('İstanbul', 'Kocaeli');</code> listesinde HANGİ BÖLÜM GÖRÜNMEZ?", table: personelTable, options: ["Bilgi İşlem", "İdari İşler", "Muhasebe", "Hepsi görünür"], answer: 2 },
+            { question: "<code>SELECT REPLACE(Adi_soyadi, 'Salih ESKİOĞLU', 'Ahmet Yılmaz') FROM Personel WHERE id=1;</code> ekranında ne yazar?", table: personelTable, options: ["Salih ESKİOĞLU", "Ahmet Yılmaz", "Ahmet ESKİOĞLU", "Boş döner"], answer: 1 },
+            { question: "<code>SELECT Adi_soyadi AS isim, Sehir AS memleket FROM Personel;</code> sonucu SÜTUN BAŞLIKLARI ne olur?", table: personelTable, options: ["Adi_soyadi ve Sehir", "isim ve Sehir", "isim ve memleket", "Adi_soyadi ve memleket"], answer: 2 },
+            { question: "<code>SELECT Adi_soyadi FROM Personel ORDER BY Adi_soyadi DESC;</code> listesinin İKİNCİ SIRASINDA hangi isim yer alır? (İpucu: Z'den A'ya)", table: personelTable, options: ["Serkan ÖZGÜREL", "Salih ESKİOĞLU", "İlhan ÖZLÜ", "Ayhan ÇETİNKAYA"], answer: 1 },
+            { question: "<code>UPDATE ogrenciler SET sehir = 'Kırıkkale' WHERE ad = 'Ayşe';</code> komutunun ardından, Ayşe'nin (id=2) şehrini sorgularsanız ne döner?", table: ogrencilerTable, options: ["Mardin", "Kırıkkale", "İstanbul", "Tokat"], answer: 1 }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+
+        const questionEl = document.getElementById('question-text');
+        const tableContainerEl = document.getElementById('table-container');
+        const optionsEl = document.getElementById('options-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const navGrid = document.getElementById('nav-grid');
+        
+        function initGrid() {
+            navGrid.innerHTML = '';
+            for (let i = 0; i < quizData.length; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.innerText = i + 1;
+                btn.onclick = () => jumpToQuestion(i);
+                navGrid.appendChild(btn);
+            }
+        }
+
+        function updateGridUI() {
+            const buttons = navGrid.children;
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].className = 'nav-btn'; // Reset
+                if (userAnswers[i] !== null) buttons[i].classList.add('answered');
+                if (i === currentQuestion) buttons[i].classList.add('current');
+            }
+        }
+
+        function loadQuestion() {
+            const currentQuizData = quizData[currentQuestion];
+            questionEl.innerHTML = `<strong>Soru ${currentQuestion + 1}:</strong> ` + currentQuizData.question;
+            
+            // Eğer soru verisinde bir tablo tanımlanmışsa tabloyu göster, yoksa gizle
+            if (currentQuizData.table) {
+                tableContainerEl.innerHTML = currentQuizData.table;
+                tableContainerEl.style.display = 'block';
+            } else {
+                tableContainerEl.style.display = 'none';
+                tableContainerEl.innerHTML = '';
+            }
+
+            optionsEl.innerHTML = '';
+            const answeredIndex = userAnswers[currentQuestion];
+            const correctIndex = currentQuizData.answer;
+
+            currentQuizData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = option;
+                button.className = 'option-btn';
+
+                if (answeredIndex !== null) {
+                    button.disabled = true;
+                    if (index === correctIndex) button.classList.add('correct');
+                    if (index === answeredIndex && answeredIndex !== correctIndex) button.classList.add('wrong');
+                } else {
+                    button.onclick = () => selectAnswer(index, button);
+                }
+                
+                optionsEl.appendChild(button);
+            });
+
+            prevBtn.disabled = currentQuestion === 0;
+            
+            if (currentQuestion === quizData.length - 1) {
+                nextBtn.style.display = 'none';
+                finishBtn.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'block';
+                finishBtn.style.display = 'none';
+            }
+
+            updateGridUI();
+        }
+
+        function selectAnswer(selectedIndex, selectedButton) {
+            userAnswers[currentQuestion] = selectedIndex;
+            const correctIndex = quizData[currentQuestion].answer;
+            const buttons = optionsEl.querySelectorAll('.option-btn');
+            
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === correctIndex) {
+                selectedButton.classList.add('correct');
+            } else {
+                selectedButton.classList.add('wrong');
+                buttons[correctIndex].classList.add('correct');
+            }
+            updateGridUI();
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            }
+        }
+
+        function jumpToQuestion(index) {
+            currentQuestion = index;
+            loadQuestion();
+        }
+
+        function showResults() {
+            let score = 0;
+            userAnswers.forEach((ans, index) => {
+                if (ans === quizData[index].answer) score++;
+            });
+
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+            
+            document.getElementById('result-score').innerText = `${score} / ${quizData.length}`;
+            
+            const messageEl = document.getElementById('result-message');
+            const percentage = (score / quizData.length) * 100;
+            
+            if (percentage === 100) messageEl.innerText = "Kusursuz! Vize ve Finallere tamamen hazırsın.";
+            else if (percentage >= 70) messageEl.innerText = "Harika iş çıkardın, veritabanı mantığını çok iyi oturtmuşsun.";
+            else if (percentage >= 40) messageEl.innerText = "Fena değil, ancak bazı temel komutların üstünden geçmen faydalı olabilir.";
+            else messageEl.innerText = "Biraz daha pratik yapmaya ihtiyacın var. Notlara bir kez daha göz atmalısın!";
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            document.getElementById('quiz-screen').style.display = 'block';
+            document.getElementById('result-screen').style.display = 'none';
+            initGrid();
+            loadQuestion();
+        }
+
+        // Başlangıç
+        initGrid();
+        loadQuestion();
+    </script>
+</body>
+</html>
